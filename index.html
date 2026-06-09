@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./css/style.css">
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <title>HeyDude</title>
+</head>
+<body>
+
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<!-- Splash Screen -->
+<div id="splash-screen" class="splash-screen">
+    <img src="img/logo.png" alt="HeyDude Logo">
+    <h1>HeyDude</h1>
+    <p>Connecting...</p>
+</div>
+
+<!-- ================= AUTH SCREEN ================= -->
+<section id="auth-screen" class="screen active">
+
+    <div class="auth-card">
+
+        <div class="auth-header">
+            <img src="img/logo.png" alt="Logo">
+            <h2>HeyDude</h2>
+            <p>Find friends and chat in real time</p>
+        </div>
+
+        <div class="auth-tabs">
+            <button id="login-tab" class="tab active">Login</button>
+            <button id="register-tab" class="tab">Register</button>
+        </div>
+
+        <div id="auth-error" class="error-box"></div>
+
+        <!-- Login Form -->
+        <form id="login-form">
+
+            <div class="input-group">
+                <label>Email</label>
+                <input
+                    type="email"
+                    id="login-email"
+                    placeholder="Enter email"
+                    required
+                >
+            </div>
+
+            <div class="input-group">
+                <label>Password</label>
+                <input
+                    type="password"
+                    id="login-password"
+                    placeholder="Enter password"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="primary-btn">
+                Login
+            </button>
+
+        </form>
+
+        <!-- Register Form -->
+        <form id="register-form" class="hidden">
+
+            <div class="input-group">
+                <label>Username</label>
+                <input
+                    type="text"
+                    id="register-username"
+                    placeholder="@username"
+                    required
+                >
+            </div>
+
+            <div class="input-group">
+                <label>Email</label>
+                <input
+                    type="email"
+                    id="register-email"
+                    placeholder="Enter email"
+                    required
+                >
+            </div>
+
+            <div class="input-group">
+                <label>Password</label>
+                <input
+                    type="password"
+                    id="register-password"
+                    placeholder="Create password"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="primary-btn">
+                Create Account
+            </button>
+
+        </form>
+
+    </div>
+
+</section>
+
+<!-- ================= CHAT APPLICATION ================= -->
+<section id="app-screen" class="screen">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <div class="sidebar-top">
+
+            <div class="brand">
+                <img src="img/logo.png" alt="">
+                <h3>HeyDude</h3>
+            </div>
+
+            <button id="logout-btn" class="icon-btn">
+                Logout
+            </button>
+
+        </div>
+
+        <!-- User Search -->
+        <div class="search-box">
+
+            <input
+                type="text"
+                id="user-search"
+                placeholder="Search @username"
+            >
+
+            <div id="search-results" class="search-results"></div>
+
+        </div>
+
+        <!-- Friend Requests -->
+        <div class="section-title">
+            Friend Requests
+        </div>
+
+        <div id="request-list" class="request-list"></div>
+
+        <!-- Chats -->
+        <div class="section-title">
+            Chats
+        </div>
+
+        <div id="chat-list" class="chat-list"></div>
+
+        <!-- Profile -->
+        <div class="profile-area">
+
+            <div class="profile-avatar" id="my-avatar">
+                U
+            </div>
+
+            <div class="profile-info">
+                <h4 id="my-name">Username</h4>
+                <span id="my-status">
+                    Online
+                </span>
+            </div>
+
+        </div>
+
+    </aside>
+
+    <!-- Chat Panel -->
+    <main class="chat-panel">
+
+        <!-- Empty State -->
+        <div id="welcome-screen" class="welcome-screen">
+
+            <img
+                src="img/logo.png"
+                alt="HeyDude"
+            >
+
+            <h2>
+                Welcome to HeyDude
+            </h2>
+
+            <p>
+                Search friends and start chatting instantly.
+            </p>
+
+        </div>
+
+        <!-- Active Chat -->
+        <div id="chat-container" class="chat-container hidden">
+
+            <!-- Header -->
+            <div class="chat-header">
+
+                <div class="chat-user">
+
+                    <div
+                        id="chat-avatar"
+                        class="chat-avatar"
+                    >
+                        U
+                    </div>
+
+                    <div>
+
+                        <h3 id="chat-name">
+                            Username
+                        </h3>
+
+                        <span id="chat-status">
+                            Offline
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Messages -->
+            <div id="messages" class="messages"></div>
+
+            <!-- Typing Indicator -->
+            <div
+                id="typing-indicator"
+                class="typing-indicator hidden"
+            >
+                Typing...
+            </div>
+
+            <!-- Message Input -->
+            <div class="message-input">
+
+                <textarea
+                    id="message-text"
+                    placeholder="Type a message..."
+                ></textarea>
+
+                <button
+                    id="send-btn"
+                    class="send-btn"
+                >
+                    Send
+                </button>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</section>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- Scripts -->
+<script src="./js/firebase.js"></script>
+<script src="./js/auth.js"></script>
+<script src="./js/search.js"></script>
+<script src="./js/chat.js"></script>
+<script src="./js/app.js"></script>
+
+</body>
+</html>
