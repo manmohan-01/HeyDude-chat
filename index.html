@@ -13,61 +13,90 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <!-- Splash Screen -->
 <div id="splash-screen" class="splash-screen">
-  <img src="img/logo.png" alt="HeyDude Logo">
+  <div class="splash-logo-wrap">
+    <img src="img/logo.png" alt="HeyDude Logo">
+    <div class="splash-ring"></div>
+  </div>
   <h1>HeyDude</h1>
-  <p>Connecting...</p>
+  <p>Connecting<span class="dot-anim">...</span></p>
 </div>
 
 <!-- ================= AUTH SCREEN ================= -->
 <section id="auth-screen" class="screen active">
+  <div class="auth-bg-orbs">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
   <div class="auth-card">
-
     <div class="auth-header">
-      <img src="img/logo.png" alt="Logo">
+      <div class="auth-logo-wrap">
+        <img src="img/logo.png" alt="Logo">
+      </div>
       <h2>HeyDude</h2>
       <p>Find friends and chat in real time</p>
     </div>
-
     <div class="auth-tabs">
       <button id="login-tab" class="tab active">Login</button>
       <button id="register-tab" class="tab">Register</button>
     </div>
-
     <div id="auth-error" class="error-box"></div>
 
     <!-- Login Form -->
     <form id="login-form">
       <div class="input-group">
         <label>Email</label>
-        <input type="email" id="login-email" placeholder="Enter email" required autocomplete="email">
+        <div class="input-wrap">
+          <span class="input-icon">✉</span>
+          <input type="email" id="login-email" placeholder="Enter email" required autocomplete="email">
+        </div>
       </div>
       <div class="input-group">
         <label>Password</label>
-        <input type="password" id="login-password" placeholder="Enter password" required autocomplete="current-password">
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="login-password" placeholder="Enter password" required autocomplete="current-password">
+          <button type="button" class="toggle-pw" tabindex="-1">👁</button>
+        </div>
       </div>
-      <button type="submit" class="primary-btn">Login</button>
+      <button type="submit" class="primary-btn">
+        <span>Login</span>
+        <div class="btn-ripple"></div>
+      </button>
     </form>
 
     <!-- Register Form -->
     <form id="register-form" class="hidden">
       <div class="input-group">
         <label>Username</label>
-        <input type="text" id="register-username" placeholder="@username" required autocomplete="username">
+        <div class="input-wrap">
+          <span class="input-icon">@</span>
+          <input type="text" id="register-username" placeholder="username" required autocomplete="username">
+        </div>
       </div>
       <div class="input-group">
         <label>Email</label>
-        <input type="email" id="register-email" placeholder="Enter email" required autocomplete="email">
+        <div class="input-wrap">
+          <span class="input-icon">✉</span>
+          <input type="email" id="register-email" placeholder="Enter email" required autocomplete="email">
+        </div>
       </div>
       <div class="input-group">
         <label>Password</label>
-        <input type="password" id="register-password" placeholder="Create password (min. 6 chars)" required autocomplete="new-password" minlength="6">
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="register-password" placeholder="Min. 6 characters" required autocomplete="new-password" minlength="6">
+        </div>
       </div>
-      <button type="submit" class="primary-btn">Create Account</button>
+      <button type="submit" class="primary-btn">
+        <span>Create Account</span>
+        <div class="btn-ripple"></div>
+      </button>
     </form>
-
   </div>
 </section>
 
@@ -75,28 +104,39 @@
 <section id="app-screen" class="screen">
 
   <!-- Sidebar -->
-  <aside class="sidebar">
-
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-top">
       <div class="brand">
         <img src="img/logo.png" alt="">
         <h3>HeyDude</h3>
       </div>
-      <button id="logout-btn" class="icon-btn">Logout</button>
+      <div class="sidebar-actions">
+        <button id="theme-toggle" class="icon-btn" title="Toggle Theme">🌙</button>
+        <button id="logout-btn" class="icon-btn">Logout</button>
+      </div>
     </div>
 
     <!-- User Search -->
     <div class="search-box">
-      <input type="text" id="user-search" placeholder="🔍 Search @username" autocomplete="off">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="user-search" placeholder="Search @username" autocomplete="off">
+        <button id="search-clear" class="search-clear hidden">✕</button>
+      </div>
       <div id="search-results" class="search-results"></div>
     </div>
 
     <!-- Friend Requests -->
-    <div class="section-title">Friend Requests</div>
+    <div class="section-title" id="req-title">
+      <span>Requests</span>
+      <span id="req-badge" class="badge hidden">0</span>
+    </div>
     <div id="request-list" class="request-list"></div>
 
     <!-- Chats -->
-    <div class="section-title">Chats</div>
+    <div class="section-title">
+      <span>Messages</span>
+    </div>
     <div id="chat-list" class="chat-list"></div>
 
     <!-- Profile -->
@@ -104,19 +144,26 @@
       <div class="profile-avatar" id="my-avatar">U</div>
       <div class="profile-info">
         <h4 id="my-name">Username</h4>
-        <span id="my-status">Online</span>
+        <span id="my-status" class="status-online">● Online</span>
       </div>
+      <button id="profile-settings-btn" class="icon-btn icon-btn-sm">⚙</button>
     </div>
-
   </aside>
 
   <!-- Chat Panel -->
-  <main class="chat-panel">
+  <main class="chat-panel" id="chat-panel">
 
     <!-- Empty State -->
     <div id="welcome-screen" class="welcome-screen">
-      <img src="img/logo.png" alt="HeyDude">
-      <h2>Welcome to HeyDude</h2>
+      <div class="welcome-animation">
+        <div class="welcome-circles">
+          <div class="wc wc1"></div>
+          <div class="wc wc2"></div>
+          <div class="wc wc3"></div>
+        </div>
+        <img src="img/logo.png" alt="HeyDude">
+      </div>
+      <h2>Welcome to HeyDude 👋</h2>
       <p>Search for friends above and start chatting instantly.</p>
     </div>
 
@@ -125,41 +172,153 @@
 
       <!-- Header -->
       <div class="chat-header">
+        <button id="mobile-back" class="mobile-back-btn">←</button>
         <div class="chat-user">
-          <div id="chat-avatar" class="chat-avatar">U</div>
+          <div class="chat-avatar-wrap">
+            <div id="chat-avatar" class="chat-avatar">U</div>
+            <div id="chat-online-dot" class="online-dot-sm"></div>
+          </div>
           <div>
             <h3 id="chat-name">Username</h3>
             <span id="chat-status">Offline</span>
           </div>
         </div>
+        <div class="chat-header-actions">
+          <button class="icon-btn icon-btn-sm" id="call-btn" title="Voice Call">📞</button>
+          <button class="icon-btn icon-btn-sm" id="video-btn" title="Video Call">📹</button>
+          <button class="icon-btn icon-btn-sm" id="search-msg-btn" title="Search Messages">🔎</button>
+        </div>
+      </div>
+
+      <!-- Message Search Bar (hidden by default) -->
+      <div id="msg-search-bar" class="msg-search-bar hidden">
+        <input type="text" id="msg-search-input" placeholder="Search in conversation...">
+        <button id="msg-search-close" class="icon-btn icon-btn-sm">✕</button>
       </div>
 
       <!-- Messages -->
-      <div id="messages" class="messages"></div>
+      <div id="messages" class="messages">
+        <div id="load-more-wrap" class="load-more-wrap hidden">
+          <button id="load-more-btn" class="load-more-btn">Load earlier messages</button>
+        </div>
+      </div>
 
       <!-- Typing Indicator -->
-      <div id="typing-indicator" class="typing-indicator hidden">typing...</div>
+      <div id="typing-indicator" class="typing-indicator hidden">
+        <div class="typing-dots">
+          <span></span><span></span><span></span>
+        </div>
+        <span id="typing-text">typing</span>
+      </div>
+
+      <!-- Reply Preview -->
+      <div id="reply-preview" class="reply-preview hidden">
+        <div class="reply-bar"></div>
+        <div class="reply-content">
+          <span class="reply-label">Replying to</span>
+          <span id="reply-text"></span>
+        </div>
+        <button id="reply-cancel" class="icon-btn icon-btn-sm">✕</button>
+      </div>
 
       <!-- Message Input -->
       <div class="message-input">
-        <textarea id="message-text" placeholder="Type a message… (Enter to send)"></textarea>
-        <button id="send-btn" class="send-btn">Send</button>
+        <button id="attach-btn" class="input-action-btn" title="Attach file">📎</button>
+        <button id="emoji-btn" class="input-action-btn" title="Emoji">😊</button>
+        <div class="textarea-wrap">
+          <textarea id="message-text" placeholder="Type a message…" rows="1"></textarea>
+        </div>
+        <button id="gif-btn" class="input-action-btn" title="Send GIF">GIF</button>
+        <button id="send-btn" class="send-btn" title="Send (Enter)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+        </button>
       </div>
 
+      <!-- Hidden file input -->
+      <input type="file" id="file-input" class="hidden" accept="image/*,video/*,.pdf,.doc,.docx,.txt,.zip">
+      <input type="file" id="image-input" class="hidden" accept="image/*">
     </div>
 
   </main>
 
 </section>
 
+<!-- ================= EMOJI PICKER ================= -->
+<div id="emoji-picker" class="emoji-picker hidden">
+  <div class="emoji-picker-header">
+    <div class="emoji-cats">
+      <button class="emoji-cat active" data-cat="recent">🕐</button>
+      <button class="emoji-cat" data-cat="smileys">😊</button>
+      <button class="emoji-cat" data-cat="people">👋</button>
+      <button class="emoji-cat" data-cat="nature">🌿</button>
+      <button class="emoji-cat" data-cat="food">🍕</button>
+      <button class="emoji-cat" data-cat="travel">✈️</button>
+      <button class="emoji-cat" data-cat="objects">💡</button>
+      <button class="emoji-cat" data-cat="symbols">❤️</button>
+    </div>
+    <input type="text" id="emoji-search" placeholder="Search emoji..." class="emoji-search-input">
+  </div>
+  <div id="emoji-grid" class="emoji-grid"></div>
+</div>
+
+<!-- ================= GIF PICKER ================= -->
+<div id="gif-picker" class="gif-picker hidden">
+  <div class="gif-header">
+    <input type="text" id="gif-search" placeholder="Search GIFs via Giphy…" class="gif-search-input">
+    <button id="gif-close" class="icon-btn icon-btn-sm">✕</button>
+  </div>
+  <div id="gif-grid" class="gif-grid">
+    <div class="gif-placeholder">Search for GIFs above</div>
+  </div>
+</div>
+
+<!-- ================= IMAGE LIGHTBOX ================= -->
+<div id="lightbox" class="lightbox hidden">
+  <button id="lightbox-close" class="lightbox-close">✕</button>
+  <img id="lightbox-img" src="" alt="">
+  <a id="lightbox-download" class="lightbox-download" download>⬇ Download</a>
+</div>
+
+<!-- ================= REACTION POPUP ================= -->
+<div id="reaction-popup" class="reaction-popup hidden">
+  <button class="reaction-btn" data-emoji="❤️">❤️</button>
+  <button class="reaction-btn" data-emoji="😂">😂</button>
+  <button class="reaction-btn" data-emoji="😮">😮</button>
+  <button class="reaction-btn" data-emoji="😢">😢</button>
+  <button class="reaction-btn" data-emoji="👍">👍</button>
+  <button class="reaction-btn" data-emoji="🔥">🔥</button>
+</div>
+
+<!-- ================= CALL MODAL ================= -->
+<div id="call-modal" class="call-modal hidden">
+  <div class="call-modal-inner">
+    <div id="call-avatar" class="call-avatar">U</div>
+    <h3 id="call-name">Username</h3>
+    <p id="call-status-text">Calling...</p>
+    <div class="call-actions">
+      <button id="call-end" class="call-btn call-end">📵</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div id="toast" class="toast"></div>
 
-<!-- Scripts (order matters) -->
+<!-- Context Menu -->
+<div id="context-menu" class="context-menu hidden">
+  <button data-action="reply">↩ Reply</button>
+  <button data-action="copy">📋 Copy</button>
+  <button data-action="react">😊 React</button>
+  <button data-action="delete" class="danger">🗑 Delete</button>
+</div>
+
+<!-- Scripts -->
 <script src="js/firebase.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/search.js"></script>
 <script src="js/chat.js"></script>
+<script src="js/media.js"></script>
+<script src="js/emoji.js"></script>
 <script src="js/app.js"></script>
 
 </body>
