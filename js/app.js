@@ -3,16 +3,13 @@
 // js/app.js
 // =====================================
 
-// =====================================
-// INITIALIZATION
-// =====================================
-
 document.addEventListener("DOMContentLoaded", () => {
   setupNetworkListener();
   setupVisibilityTracking();
   setupKeyboardShortcuts();
   setupNotifications();
   loadTheme();
+  setupThemeToggle();
 });
 
 // =====================================
@@ -21,11 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function setupNetworkListener() {
   window.addEventListener("online",  () => showToast("Back online ✓"));
-  window.addEventListener("offline", () => showToast("No internet connection"));
+  window.addEventListener("offline", () => showToast("No internet connection ⚠️"));
 }
 
 // =====================================
-// PAGE VISIBILITY (pause/resume presence)
+// PAGE VISIBILITY
 // =====================================
 
 function setupVisibilityTracking() {
@@ -59,6 +56,7 @@ function setupNotifications() {
 
 function notifyUser(title, body) {
   if (Notification.permission !== "granted") return;
+  if (!document.hidden) return; // only notify when tab is hidden
   new Notification(title, { body, icon: "./img/logo.png" });
 }
 
@@ -68,8 +66,23 @@ function notifyUser(title, body) {
 
 function setupKeyboardShortcuts() {
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape" && window.innerWidth <= 768) {
-      closeMobileChat();
+    // Escape: close mobile chat or pickers
+    if (e.key === "Escape") {
+      if (window.innerWidth <= 768) {
+        closeMobileChat();
+      }
+      document.getElementById("emoji-picker").classList.add("hidden");
+      document.getElementById("gif-picker").classList.add("hidden");
+      document.getElementById("lightbox").classList.add("hidden");
+      document.getElementById("context-menu").classList.add("hidden");
+      document.getElementById("reaction-popup").classList.add("hidden");
+    }
+
+    // Ctrl/Cmd + K: focus search
+    if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+      e.preventDefault();
+      const searchEl = document.getElementById("user-search");
+      if (searchEl) searchEl.focus();
     }
   });
 }
@@ -81,31 +94,26 @@ function setupKeyboardShortcuts() {
 function saveTheme(theme) {
   localStorage.setItem("heydude-theme", theme);
   document.body.setAttribute("data-theme", theme);
+  updateThemeBtn(theme);
 }
 
 function loadTheme() {
-  const theme = localStorage.getItem("heydude-theme");
-  if (theme) document.body.setAttribute("data-theme", theme);
+  const theme = localStorage.getItem("heydude-theme") || "dark";
+  document.body.setAttribute("data-theme", theme);
+  updateThemeBtn(theme);
 }
 
-// =====================================
-// MOBILE BACK BUTTON — injected after chat opens
-// =====================================
-
-function ensureMobileBackButton() {
-  if (document.getElementById("mobile-back")) return;
-
-  const header = document.querySelector(".chat-header");
-  if (!header) return;
-
-  const btn       = document.createElement("button");
-  btn.id          = "mobile-back";
-  btn.innerHTML   = "←";
-  btn.className   = "mobile-back-btn";
-  btn.onclick     = closeMobileChat;
-
-  header.prepend(btn);
+function updateThemeBtn(theme) {
+  const btn = document.getElementById("theme-toggle");
+  if (btn) btn.textContent = theme === "dark" ? "☀️" : "🌙";
 }
 
-// Inject back button once DOM is ready
-document.addEventListener("DOMContentLoaded", ensureMobileBackButton);
+function setupThemeToggle() {
+  const btn = document.getElementById("theme-toggle");
+  if (!btn) return;
+
+  btn.addEventListener("click", () => {
+    const current = document.body.getAttribute("data-theme") || "dark";
+    saveTheme(current === "dark" ? "light" : "dark");
+  });
+}
