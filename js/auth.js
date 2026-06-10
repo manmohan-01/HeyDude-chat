@@ -13,6 +13,24 @@ const appScreen    = document.getElementById("app-screen");
 const logoutBtn    = document.getElementById("logout-btn");
 
 // ======================
+// PASSWORD TOGGLE
+// ======================
+
+document.querySelectorAll(".toggle-pw").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const input = btn.previousElementSibling;
+    if (!input) return;
+    if (input.type === "password") {
+      input.type = "text";
+      btn.textContent = "🙈";
+    } else {
+      input.type = "password";
+      btn.textContent = "👁";
+    }
+  });
+});
+
+// ======================
 // TAB SWITCHING
 // ======================
 
@@ -66,20 +84,22 @@ registerForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   clearAuthError();
 
+  const btn      = registerForm.querySelector(".primary-btn");
   const username = document.getElementById("register-username").value.trim().toLowerCase();
   const email    = document.getElementById("register-email").value.trim();
   const password = document.getElementById("register-password").value;
 
-  // Validate username format
   if (username.length < 3) {
     showAuthError("Username must be at least 3 characters.");
     return;
   }
-
   if (!/^[a-z0-9_]+$/.test(username)) {
     showAuthError("Username can only contain letters, numbers, and underscores.");
     return;
   }
+
+  btn.disabled = true;
+  btn.querySelector("span").textContent = "Creating...";
 
   try {
     const exists = await usernameExists(username);
@@ -103,7 +123,16 @@ registerForm.addEventListener("submit", async (e) => {
     showToast("Account created! Welcome 🎉");
 
   } catch (error) {
-    showAuthError(error.message);
+    if (error.code === "auth/email-already-in-use") {
+      showAuthError("Email already registered. Try logging in.");
+    } else if (error.code === "auth/weak-password") {
+      showAuthError("Password is too weak. Use at least 6 characters.");
+    } else {
+      showAuthError(error.message);
+    }
+  } finally {
+    btn.disabled = false;
+    btn.querySelector("span").textContent = "Create Account";
   }
 });
 
@@ -115,14 +144,17 @@ loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   clearAuthError();
 
+  const btn      = loginForm.querySelector(".primary-btn");
   const email    = document.getElementById("login-email").value.trim();
   const password = document.getElementById("login-password").value;
 
+  btn.disabled = true;
+  btn.querySelector("span").textContent = "Logging in...";
+
   try {
     await auth.signInWithEmailAndPassword(email, password);
-    showToast("Welcome back!");
+    showToast("Welcome back! 👋");
   } catch (error) {
-    // Friendlier error messages
     if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
       showAuthError("Incorrect email or password.");
     } else if (error.code === "auth/too-many-requests") {
@@ -130,6 +162,9 @@ loginForm.addEventListener("submit", async (e) => {
     } else {
       showAuthError(error.message);
     }
+  } finally {
+    btn.disabled = false;
+    btn.querySelector("span").textContent = "Login";
   }
 });
 
@@ -139,11 +174,12 @@ loginForm.addEventListener("submit", async (e) => {
 
 logoutBtn.addEventListener("click", async () => {
   try {
-    if (currentUser) {
-      await setUserOffline(currentUser.uid);
-    }
+    if (currentUser) await setUserOffline(currentUser.uid);
     await auth.signOut();
     showToast("Logged out");
+    // Reset UI
+    document.getElementById("chat-list").innerHTML    = "";
+    document.getElementById("request-list").innerHTML = "";
   } catch (error) {
     console.error("Logout error:", error);
   }
@@ -154,11 +190,10 @@ logoutBtn.addEventListener("click", async () => {
 // ======================
 
 auth.onAuthStateChanged(async (user) => {
-  // Hide splash whenever auth state resolves
   const splash = document.getElementById("splash-screen");
   if (splash) {
     splash.style.opacity = "0";
-    setTimeout(() => { splash.style.display = "none"; }, 400);
+    setTimeout(() => { splash.style.display = "none"; }, 500);
   }
 
   if (!user) {
@@ -173,25 +208,23 @@ auth.onAuthStateChanged(async (user) => {
     const profile  = snapshot.val();
 
     if (!profile) {
-      // Profile missing — sign out cleanly
       await auth.signOut();
       return;
     }
 
     currentUser = { uid: user.uid, ...profile };
-
     setUserOnline(user.uid);
 
-    // Update sidebar profile
-    document.getElementById("my-name").textContent   = profile.username;
-    document.getElementById("my-status").textContent  = "Online";
-    document.getElementById("my-avatar").textContent  = getInitial(profile.username);
-    document.getElementById("my-avatar").style.background = avatarColor(profile.username);
+    // Sidebar profile
+    document.getElementById("my-name").textContent           = profile.username;
+    document.getElementById("my-status").textContent         = "● Online";
+    document.getElementById("my-avatar").textContent         = getInitial(profile.username);
+    document.getElementById("my-avatar").style.background    = avatarColor(profile.username);
 
     authScreen.classList.remove("active");
     appScreen.classList.add("active");
 
-    if (typeof loadChats === "function")          loadChats();
+    if (typeof loadChats          === "function") loadChats();
     if (typeof listenFriendRequests === "function") listenFriendRequests();
 
   } catch (error) {
