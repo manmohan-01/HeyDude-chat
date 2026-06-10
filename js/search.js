@@ -6,26 +6,39 @@
 const searchInput   = document.getElementById("user-search");
 const searchResults = document.getElementById("search-results");
 const requestList   = document.getElementById("request-list");
+const searchClear   = document.getElementById("search-clear");
 
 let searchDebounce = null;
 
-// =====================================
-// SEARCH USERS (debounced)
-// =====================================
+// ======================
+// SEARCH INPUT EVENTS
+// ======================
 
 searchInput.addEventListener("input", () => {
+  const val = searchInput.value.trim();
+  searchClear.classList.toggle("hidden", val.length === 0);
   clearTimeout(searchDebounce);
+  if (!val) { searchResults.innerHTML = ""; return; }
   searchDebounce = setTimeout(performSearch, 300);
 });
+
+searchClear.addEventListener("click", () => {
+  searchInput.value = "";
+  searchResults.innerHTML = "";
+  searchClear.classList.add("hidden");
+  searchInput.focus();
+});
+
+// ======================
+// PERFORM SEARCH
+// ======================
 
 async function performSearch() {
   const query = searchInput.value.trim().toLowerCase();
   searchResults.innerHTML = "";
-
   if (!query || query.length < 2) return;
 
   try {
-    // FIX: query by prefix using startAt/endAt instead of fetching all users
     const snapshot = await usersRef
       .orderByChild("username")
       .startAt(query)
@@ -35,7 +48,7 @@ async function performSearch() {
 
     const users = snapshot.val();
     if (!users) {
-      searchResults.innerHTML = `<div class="search-empty">No users found</div>`;
+      searchResults.innerHTML = `<div class="search-empty">No users found for "<b>${escapeHTML(query)}</b>"</div>`;
       return;
     }
 
@@ -55,9 +68,9 @@ async function performSearch() {
   }
 }
 
-// =====================================
+// ======================
 // RENDER SEARCH RESULT
-// =====================================
+// ======================
 
 function renderSearchUser(user) {
   const div = document.createElement("div");
@@ -70,47 +83,33 @@ function renderSearchUser(user) {
           ${getInitial(user.username)}
         </div>
         <div>
-          <strong>${escapeHTML(user.username)}</strong>
-          <br>
-          <small class="${user.online ? 'online-text' : 'offline-text'}">
+          <strong>${escapeHTML(user.username)}</strong><br>
+          <small class="${user.online ? "online-text" : "offline-text"}">
             ${user.online ? "● Online" : "○ Offline"}
           </small>
         </div>
       </div>
-      <button
-        class="add-btn"
-        onclick="sendFriendRequest('${user.uid}', this)"
-      >
-        Add
-      </button>
+      <button class="add-btn" onclick="sendFriendRequest('${user.uid}', this)">Add</button>
     </div>
   `;
 
   searchResults.appendChild(div);
 }
 
-// =====================================
+// ======================
 // SEND FRIEND REQUEST
-// =====================================
+// ======================
 
 async function sendFriendRequest(targetUid, btn) {
   if (!currentUser) return;
 
-  // FIX: disable button to prevent duplicate requests
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "Sent ✓";
-  }
+  btn.disabled    = true;
+  btn.textContent = "Sent ✓";
 
   try {
-    // Check if already friends
     const alreadyFriends = await areFriends(currentUser.uid, targetUid);
-    if (alreadyFriends) {
-      showToast("Already friends!");
-      return;
-    }
+    if (alreadyFriends) { showToast("Already friends!"); return; }
 
-    // Check for existing pending request
     const existingSnap = await requestsRef
       .orderByChild("from")
       .equalTo(currentUser.uid)
@@ -121,10 +120,7 @@ async function sendFriendRequest(targetUid, btn) {
       const duplicate = Object.values(existing).find(
         r => r.to === targetUid && r.status === "pending"
       );
-      if (duplicate) {
-        showToast("Request already sent");
-        return;
-      }
+      if (duplicate) { showToast("Request already sent"); return; }
     }
 
     const requestId = requestsRef.push().key;
@@ -136,21 +132,19 @@ async function sendFriendRequest(targetUid, btn) {
       createdAt: firebase.database.ServerValue.TIMESTAMP
     });
 
-    showToast("Friend request sent!");
+    showToast("Friend request sent! 🚀");
 
   } catch (error) {
     console.error("Send request error:", error);
     showToast("Failed to send request");
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "Add";
-    }
+    btn.disabled    = false;
+    btn.textContent = "Add";
   }
 }
 
-// =====================================
+// ======================
 // LISTEN FRIEND REQUESTS
-// =====================================
+// ======================
 
 function listenFriendRequests() {
   if (!currentUser) return;
@@ -158,19 +152,31 @@ function listenFriendRequests() {
   requestsRef.on("value", snapshot => {
     requestList.innerHTML = "";
     const requests = snapshot.val();
-    if (!requests) return;
+    const badge    = document.getElementById("req-badge");
 
-    Object.values(requests).forEach(request => {
-      if (request.to === currentUser.uid && request.status === "pending") {
-        renderRequest(request);
-      }
-    });
+    if (!requests) {
+      badge.classList.add("hidden");
+      return;
+    }
+
+    const pending = Object.values(requests).filter(
+      r => r.to === currentUser.uid && r.status === "pending"
+    );
+
+    if (pending.length === 0) {
+      badge.classList.add("hidden");
+    } else {
+      badge.textContent = pending.length;
+      badge.classList.remove("hidden");
+    }
+
+    pending.forEach(renderRequest);
   });
 }
 
-// =====================================
+// ======================
 // RENDER REQUEST
-// =====================================
+// ======================
 
 async function renderRequest(request) {
   const senderSnap = await usersRef.child(request.from).once("value");
@@ -179,7 +185,7 @@ async function renderRequest(request) {
 
   const div = document.createElement("div");
   div.className = "search-user";
-  div.id = `req-${request.id}`;
+  div.id        = `req-${request.id}`;
 
   div.innerHTML = `
     <div class="search-user-inner">
@@ -188,8 +194,7 @@ async function renderRequest(request) {
           ${getInitial(sender.username)}
         </div>
         <div>
-          <strong>${escapeHTML(sender.username)}</strong>
-          <br>
+          <strong>${escapeHTML(sender.username)}</strong><br>
           <small style="color:var(--text-light)">wants to chat</small>
         </div>
       </div>
@@ -203,9 +208,9 @@ async function renderRequest(request) {
   requestList.appendChild(div);
 }
 
-// =====================================
+// ======================
 // ACCEPT REQUEST
-// =====================================
+// ======================
 
 async function acceptRequest(requestId) {
   try {
@@ -215,7 +220,6 @@ async function acceptRequest(requestId) {
 
     const chatId = generateChatId(request.from, request.to);
 
-    // Run both operations together
     await Promise.all([
       requestsRef.child(requestId).update({ status: "accepted" }),
       chatsRef.child(chatId).set({
@@ -229,7 +233,6 @@ async function acceptRequest(requestId) {
     ]);
 
     showToast("Friend added! 🎉");
-
     if (typeof loadChats === "function") loadChats();
 
   } catch (error) {
@@ -238,9 +241,9 @@ async function acceptRequest(requestId) {
   }
 }
 
-// =====================================
+// ======================
 // REJECT REQUEST
-// =====================================
+// ======================
 
 async function rejectRequest(requestId) {
   try {
@@ -251,9 +254,9 @@ async function rejectRequest(requestId) {
   }
 }
 
-// =====================================
+// ======================
 // CHECK FRIENDSHIP
-// =====================================
+// ======================
 
 async function areFriends(uid1, uid2) {
   const chatId   = generateChatId(uid1, uid2);
